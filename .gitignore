@@ -1,0 +1,34 @@
+# Generated run outputs. Everything here is reproduced exactly by
+#   python extract_tiles.py <catalogue.pdf> -o output
+# so it is kept on disk but out of version control.
+output/
+
+# Python bytecode and packaging artefacts
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Tooling caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Editor / OS noise
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Input catalogues are not ours to redistribute
+*.pdf

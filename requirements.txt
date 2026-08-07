@@ -1,0 +1,9 @@
+# Runtime dependencies. Versions are the ones the pipeline was developed and
+# validated against; the lower bounds are what the code actually needs.
+pymupdf==1.28.2      # PDF parsing: page text, image placements, XObject decoding
+pillow==12.2.0       # image cleanup: crop, Lanczos resample, PNG/JPEG encoding
+numpy==2.3.0         # border detection works on the bitmap as an array
+openpyxl==3.1.5      # the required Excel deliverable
+
+# Development only -- not needed to run the extractor.
+pytest==9.1.1
