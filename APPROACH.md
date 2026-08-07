@@ -40,6 +40,9 @@ PyMuPDF covers both halves of the problem — the text layer *and* the image obj
 with their placement transforms — so there are no two coordinate systems to
 reconcile.
 
+The solution was developed with Claude Code for AI-assisted development and Git
+for version control.
+
 **No machine learning is used.** Every decision is a geometric rule with a
 threshold traceable to a measurement of the document, so each one can be
 explained, unit-tested and retuned against a different catalogue. None of that is
