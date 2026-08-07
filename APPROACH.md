@@ -15,7 +15,7 @@ different catalogue without edits.
 
 **Result on the supplied catalogue:** 88 PDF pages → 171 catalogue pages
 (5 non-catalogue pages skipped) → **1046 tiles**, every one with a title, a size
-and an image — 1032 decoded from embedded images and 14 plain-colour tiles the
+and an image — 1031 decoded from embedded images and 15 plain-colour tiles the
 catalogue draws as vector rectangles rather than images. Runtime one to four
 minutes depending on the machine.
 
@@ -90,7 +90,7 @@ PDF ─▶ page_parser ─▶ classifier ─▶ binder ─▶ image_extractor �
 
 | Requirement | How | Evidence |
 |---|---|---|
-| Extract the **highest-quality** image | Each tile is decoded from the embedded image object's own compressed bytes; the 14 vector-drawn plain tiles are synthesised losslessly from their fill colour | 1026 unique XObjects decoded |
+| Extract the **highest-quality** image | Each tile is decoded from the embedded image object's own compressed bytes; the 15 vector-drawn plain tiles are synthesised losslessly from their fill colour | 1026 unique XObjects decoded |
 | Prefer **embedded images over screenshots** | Pages are never rasterised; extraction is resolution-independent | no render path exists in the code |
 | **Only the tile surface** — no borders, labels, shadows, frames, background | Tiles are taken as whole image objects, so labels and frames are never inside the crop; a guarded trimmer removes any flat background edge | verified on all 1046 |
 | **Preserve the entire design**, no clipping | Every cleanup step is capped and flags rather than cutting deeper | 0 crops refused, 0 caps hit; 12 step/riser tiles centre-cropped ≤11% where the printed bitmap contradicts the printed size — see Key design decisions |
@@ -150,9 +150,10 @@ catalogue prints elsewhere, a vector rectangle never on shape alone — and kept
 only if the binder finds a product name printed beneath. Unlike an embedded
 product photograph, a bare rectangle or an unexplained one-off could be any
 piece of page furniture; requiring a name is what lets the net widen without
-letting decoration through. On this catalogue the rule recovers 27 tiles
-(twelve lone `-F` companions, fourteen named vector tiles, one duplicate
-printing) and rejects 2 nameless survivors. *Rejected:* accepting singletons
+letting decoration through. On this catalogue the rule adds 27 tiles — 15 named
+vector tiles, 11 lone `-F` companions, and one further `-F` that is no longer
+alone once its vector companion of the same size joins the page — and rejects
+2 nameless survivors. *Rejected:* accepting singletons
 or rectangles unconditionally (admits banners and backdrops) or keeping the old
 strict rule (loses ~20 real products).
 
@@ -241,7 +242,7 @@ dual-size step and riser pages, the bookmatch pair and the three-panel mural.
   tolerance and matched to sizes the catalogue prints, but never printed beside
   those tiles.
 - **The 1 px/mm floor is met by upscaling** where the embedded bitmap is smaller
-  (1033 tiles, median factor 1.32). Upscaling guarantees the stated resolution, not
+  (1034 tiles, median factor 1.32). Upscaling guarantees the stated resolution, not
   new detail — the embedded image is the maximum quality the PDF contains.
 - **125 text lines near tiles remain unbound** — finish and series descriptors such
   as `Double Charge`, `PORCELAIN` and letter-spaced section banners. Each was
