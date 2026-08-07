@@ -2,6 +2,16 @@
 #   python extract_tiles.py <catalogue.pdf> -o output
 # so it is kept on disk but out of version control.
 output/
+output-*/
+
+# The packaged deliverable is a copy of a run's output/ and is delivered
+# alongside this repository, not stored in it: 218MB of PNGs would make every
+# clone slow, and the command above reproduces them byte-for-byte.
+submission/
+
+# Scratch clones used to rehearse the cold-start reproduction.
+demo-run/
+fresh-clone/
 
 # Python bytecode and packaging artefacts
 __pycache__/

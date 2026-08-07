@@ -246,6 +246,8 @@ def write_report(
         add("    size-measured-unlisted  measured, but no catalogue size matched; rounded")
         add("    shared-name          one printed name covers several tile faces")
         add("                         (bookmatch pairs, multi-panel murals)")
+        add("    vector-drawn         plain-colour tile drawn as a vector rectangle,")
+        add("                         not an embedded image; bitmap synthesised from its fill")
         add("    missing-label        no name could be bound; needs review")
         add("    ambiguous-size-header  two headers explain the shape equally well")
         add("    size-aspect-mismatch shape contradicts the header and could not be measured")

@@ -11,11 +11,12 @@ from __future__ import annotations
 
 import math
 import re
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 
 import pymupdf
 
-from .models import Half, ImagePlacement, Rect, SizeSpec, TextLine, rect_cx, rect_cy
+from .models import (Half, ImagePlacement, Rect, SizeSpec, TextLine, rect_area,
+                     rect_cx, rect_cy)
 
 # --- Calibration constants -------------------------------------------------
 # Each value is traced to a measurement of the reference catalogue, but all are
@@ -105,6 +106,62 @@ def _image_placements(page: pymupdf.Page) -> List[ImagePlacement]:
     return placements
 
 
+# Vector-drawn tiles: plain single-colour products (PLAIN BLACK, WHITE MATT...)
+# are not embedded images at all but filled rectangles in the page's vector
+# layer. Rectangles smaller than this are decorative rules, not tiles.
+VECTOR_MIN_SIDE_PT = 25.0
+# A vector rectangle overlapping an image placement by more than this fraction
+# of its own area is a frame or backdrop for that image, not a tile...
+VECTOR_MAX_IMAGE_OVERLAP = 0.3
+# ...but only when the image is of comparable size. A rectangle far smaller
+# than the image it overlaps is a swatch drawn on top of a photograph (the
+# SUPER WHITE tile on the plain-colour page sits on a room scene), not a frame.
+VECTOR_FRAME_MAX_AREA_RATIO = 6.0
+
+
+def _overlap_area(a: Rect, b: Rect) -> float:
+    w = min(a[2], b[2]) - max(a[0], b[0])
+    h = min(a[3], b[3]) - max(a[1], b[1])
+    return max(w, 0.0) * max(h, 0.0)
+
+
+def _vector_placements(page: pymupdf.Page,
+                       images: List[ImagePlacement]) -> List[ImagePlacement]:
+    """Filled or stroked rectangles that could be plain-colour tiles.
+
+    Each gets a negative pseudo-xref and provisional=True, so it survives only
+    if the binder finds a product name printed beneath it. A stroke-only
+    rectangle is a white tile outlined on white stock, so its fill is None and
+    the extractor synthesises white.
+    """
+    placements: List[ImagePlacement] = []
+    seen: set = set()
+    pseudo_xref = -1
+    for drawing in page.get_drawings():
+        if drawing["type"] not in ("f", "fs", "s"):
+            continue
+        r = drawing["rect"]
+        if min(r.width, r.height) < VECTOR_MIN_SIDE_PT:
+            continue
+        key = (round(r.x0), round(r.y0), round(r.x1), round(r.y1))
+        if key in seen:
+            continue
+        bbox = (r.x0, r.y0, r.x1, r.y1)
+        area = max(r.width * r.height, 1e-6)
+        if any(_overlap_area(bbox, im.bbox) / area > VECTOR_MAX_IMAGE_OVERLAP
+               and rect_area(im.bbox) / area < VECTOR_FRAME_MAX_AREA_RATIO
+               for im in images):
+            continue
+        seen.add(key)
+        placements.append(ImagePlacement(
+            xref=pseudo_xref, bbox=bbox,
+            stored_w=int(r.width), stored_h=int(r.height), rotation=0,
+            fill=drawing.get("fill"), provisional=True,
+        ))
+        pseudo_xref -= 1
+    return placements
+
+
 def _half_rects(page_rect: pymupdf.Rect) -> List[Tuple[str, Rect]]:
     """Split a spread at the midline; treat a portrait-ish page as a single half."""
     x0, y0, x1, y1 = page_rect
@@ -132,6 +189,7 @@ def parse_page(page: pymupdf.Page, page_index: int) -> List[Half]:
     """Split one PDF page into halves, each populated and marked skip or keep."""
     lines = _text_lines(page)
     images = _image_placements(page)
+    images += _vector_placements(page, images)
     halves: List[Half] = []
 
     for side, rect in _half_rects(page.rect):

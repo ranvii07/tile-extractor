@@ -98,6 +98,26 @@ def oriented(img: Image.Image, placement: ImagePlacement) -> Image.Image:
     return out
 
 
+def synthesize_fill(placement: ImagePlacement) -> Image.Image:
+    """A flat bitmap for a vector-drawn tile, at the rectangle's printed shape.
+
+    Plain single-colour products are drawn as filled rectangles rather than
+    embedded images, so there are no stored pixels to decode; the tile face is
+    exactly the rectangle's fill colour (white when only an outline is drawn --
+    the tile is white on white stock). Resolution carries no detail for a flat
+    colour; the cleaner upscales it to the millimetre floor as usual.
+    """
+    if placement.fill is None:
+        rgb = MATTE
+    else:
+        rgb = tuple(min(255, max(0, int(round(c * 255)))) for c in placement.fill)
+    w = max(int(round(placement.unit_w)), 1)
+    h = max(int(round(placement.unit_h)), 1)
+    return Image.new("RGB", (w, h), rgb)
+
+
 def extract_tile(source: ImageSource, placement: ImagePlacement) -> Image.Image:
-    """The tile's embedded bitmap, oriented as printed."""
+    """The tile's bitmap: embedded object for images, synthesised for vector tiles."""
+    if placement.xref < 0:
+        return synthesize_fill(placement)
     return oriented(source.get(placement.xref), placement)

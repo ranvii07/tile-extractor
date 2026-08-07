@@ -281,6 +281,8 @@ def bind_half(
                 tile.flag(f)
             if not name:
                 tile.flag("missing-label")
+            if face.xref < 0:
+                tile.flag("vector-drawn")
             if len(block.members) > 1:
                 tile.flag("shared-name")
                 tile.steps["block_faces"] = len(block.members)

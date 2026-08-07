@@ -126,8 +126,18 @@ def reading_order(placements: Sequence[ImagePlacement]) -> List[ImagePlacement]:
     return sorted(placements, key=lambda p: (round(p.bbox[1] / ROW_TOL_PT), p.bbox[0]))
 
 
-def classify_half(half: Half) -> Tuple[List[ImagePlacement], List[Rejection]]:
-    """Split a half's placements into tile candidates and explained rejections."""
+def classify_half(
+    half: Half,
+    vocabulary: Sequence[SizeSpec] = (),
+) -> Tuple[List[ImagePlacement], List[Rejection]]:
+    """Split a half's placements into tile candidates and explained rejections.
+
+    *vocabulary* is every size the catalogue prints anywhere. A lone image whose
+    shape matches no header size may still be a companion product (the single
+    square -F tile on a rectangular-tile page), so it is accepted provisionally
+    when its shape matches a vocabulary size -- the binder then keeps it only if
+    a printed name sits beneath it.
+    """
     accepted: List[ImagePlacement] = []
     rejections: List[Rejection] = []
 
@@ -169,6 +179,9 @@ def classify_half(half: Half) -> Tuple[List[ImagePlacement], List[Rejection]]:
             continue
         lone = members[0]
         if _matches_any_header(lone, half.sizes):
+            accepted.append(lone)
+        elif _matches_any_header(lone, vocabulary):
+            lone.provisional = True  # kept only if a name binds to it
             accepted.append(lone)
         else:
             rejections.append(Rejection(half.label, lone.xref, lone.bbox,

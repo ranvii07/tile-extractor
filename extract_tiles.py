@@ -108,9 +108,18 @@ def main(argv: List[str]) -> int:
 
     for half in kept:
         try:
-            accepted, rejected = classify_half(half)
+            accepted, rejected = classify_half(half, vocabulary)
             bound, unused = bind_half(half, accepted, vocabulary)
-            tiles.extend(bound)
+            # A provisional candidate (vector rectangle, or lone image accepted
+            # on a vocabulary rather than header match) is a tile only if a
+            # printed name bound to it; otherwise it was page furniture.
+            for tile in bound:
+                if tile.placement.provisional and not tile.name:
+                    rejected.append(Rejection(
+                        half.label, tile.placement.xref, tile.placement.bbox,
+                        "provisional candidate with no printed name beneath"))
+                else:
+                    tiles.append(tile)
             rejections.extend(rejected)
             leftovers.extend((half.label, line.text) for line in unused)
         except Exception as exc:

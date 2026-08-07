@@ -57,6 +57,13 @@ class ImagePlacement:
     unit_bbox: Optional[Rect] = None
     repeat_x: int = 1
     repeat_y: int = 1
+    # Plain single-colour tiles are drawn as vector rectangles, not images.
+    # They carry a negative pseudo-xref, the rectangle's fill colour (None means
+    # white -- the page stock), and provisional=True: a provisional candidate is
+    # kept only if a printed name binds to it, because unlike an embedded photo a
+    # bare rectangle could be any piece of page furniture.
+    fill: Optional[Tuple[float, float, float]] = None
+    provisional: bool = False
     # The distinct tile faces printed inside this block, in reading order. A plain
     # tile and a repeat swatch have exactly one; a bookmatch pair has two; a
     # multi-panel mural has one per panel. All share the block's single name.

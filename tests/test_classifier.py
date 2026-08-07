@@ -94,6 +94,33 @@ def test_a_lone_image_is_kept_only_when_its_shape_matches_the_header():
     assert "matches no header size" in rejected[0].reason
 
 
+def test_a_lone_image_matching_the_vocabulary_is_accepted_provisionally():
+    """A single square -F companion on a 2:1 page matches no header, but its
+    shape exists elsewhere in the catalogue, so it is kept for the binder to
+    confirm -- marked provisional so it is dropped again if no name binds."""
+    hero = img(0, 0, 200, 100, xref=1)
+    square = img(0, 300, 80, 380, xref=2)  # ratio 1.0
+    accepted, rejected = classify_half(
+        half(sizes=[HEADER], images=[hero, square]),
+        vocabulary=[HEADER, size(300, 300)])
+
+    assert [p.xref for p in accepted] == [1, 2]
+    assert rejected == []
+    assert not accepted[0].provisional
+    assert accepted[1].provisional
+
+
+def test_a_lone_image_matching_nothing_is_still_rejected():
+    hero = img(0, 0, 200, 100, xref=1)      # ratio 2.0, matches the header
+    square = img(0, 300, 90, 390, xref=2)   # ratio 1.0, in no vocabulary here
+    accepted, rejected = classify_half(
+        half(sizes=[HEADER], images=[hero, square]),
+        vocabulary=[HEADER])  # vocabulary holds only the 2:1 size
+
+    assert [p.xref for p in accepted] == [1]
+    assert "matches no header size" in rejected[0].reason
+
+
 def test_a_skipped_half_produces_nothing():
     tiles = [img(0, 0, 100, 50, xref=1), img(140, 0, 240, 50, xref=2)]
     accepted, rejected = classify_half(

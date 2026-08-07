@@ -18,7 +18,8 @@ python extract_tiles.py "Copy of Odisha Catalogue .pdf" -o output
 ```
 
 On the reference catalogue (88 PDF pages / 171 catalogue pages) this produces
-**1019 tiles** in about a minute and exits `0` with `VALIDATION : all checks passed`.
+**1046 tiles** in one to four minutes (machine-dependent) and exits `0` with
+`VALIDATION : all checks passed`.
 
 ## What you get
 
@@ -47,7 +48,7 @@ and names by position (the text row beneath a tile).
 python -m pytest tests -q
 ```
 
-126 tests. Most run on synthetic geometry and need no PDF. The golden-page tests
+134 tests. Most run on synthetic geometry and need no PDF. The golden-page tests
 in `tests/test_golden_pages.py` check hand-verified pages of the reference
 catalogue and skip themselves if it is not present — point `TILE_CATALOGUE_PDF`
 at the file to run them from another location.

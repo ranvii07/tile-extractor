@@ -45,9 +45,12 @@ def catalogue():
 
         by_half: dict[str, list] = {}
         for h in kept:
-            accepted, _ = classify_half(h)
+            accepted, _ = classify_half(h, vocabulary)
             tiles, _ = bind_half(h, accepted, vocabulary)
-            by_half[h.label] = tiles
+            # Mirror the pipeline: a provisional candidate (vector rectangle or
+            # vocabulary-matched lone image) is kept only if a name bound to it.
+            by_half[h.label] = [t for t in tiles
+                                if not (t.placement.provisional and not t.name)]
         return {"halves": halves, "kept": kept, "tiles": by_half}
     finally:
         doc.close()
@@ -61,7 +64,7 @@ def tiles_on(catalogue, label):
 
 def test_the_expected_number_of_tiles_is_found(catalogue):
     total = sum(len(v) for v in catalogue["tiles"].values())
-    assert total == 1019
+    assert total == 1046
 
 
 def test_only_the_cover_index_and_back_pages_are_skipped(catalogue):
@@ -161,6 +164,40 @@ def test_the_step_riser_headers_declare_two_sizes(catalogue):
     """The dual-size case the binder's per-tile header choice exists for."""
     half_87 = next(h for h in catalogue["kept"] if h.label == "p87L")
     assert half_87.sizes == [SizeSpec(1000, 300), SizeSpec(1000, 200)]
+
+
+# --- companion products recovered from singletons and vector rectangles ----
+
+def test_a_lone_floor_companion_on_a_wall_page_is_recovered(catalogue):
+    """p41R prints a single square 5232-F on a 600x300 page. It matches no
+    header size, but its shape exists in the catalogue vocabulary and a name is
+    printed beneath it, so it is kept and measured to 300x300."""
+    tiles = tiles_on(catalogue, "p41R")
+    f = next(t for t in tiles if t.name == "5232-F")
+    assert f.size == SizeSpec(300, 300)
+    assert "size-measured" in f.flags
+
+
+def test_plain_colour_tiles_drawn_as_vector_rectangles_are_recovered(catalogue):
+    """The PLAIN range on p63R is filled rectangles, not embedded images."""
+    tiles = tiles_on(catalogue, "p63R")
+    plains = {t.name: t for t in tiles if t.name and t.name.startswith("PLAIN ")}
+    assert set(plains) == {"PLAIN FANTA ORANGE", "PLAIN BLOOD RED",
+                           "PLAIN COBALT BLUE", "PLAIN BOTTLE GREEN",
+                           "PLAIN YELLOW", "PLAIN BLACK"}
+    for t in plains.values():
+        assert t.size == SizeSpec(450, 300)
+        assert "vector-drawn" in t.flags
+        assert t.placement.xref < 0
+
+
+def test_a_nameless_vector_rectangle_is_not_a_tile(catalogue):
+    """Page furniture rectangles never gain a bound name, so every vector tile
+    that survives carries one -- the gate the recovery rule depends on."""
+    for tiles in catalogue["tiles"].values():
+        for t in tiles:
+            if t.placement.xref < 0:
+                assert t.name
 
 
 # --- multi-face products ---------------------------------------------------
